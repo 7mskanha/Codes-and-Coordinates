@@ -1,26 +1,44 @@
 import turtle as tu
 import re
 import docx
+import time
 
-# Source file for coordinates
-source = "World cup final shot"
+source = "Dhoni in Yellow Final"    # Mention the docx (Coordinate) file name without extension
 
 try:
     data = docx.Document(f"{source}.docx")
 except:
-    print(f"Error: Could not find {source}.docx")
+    print(f"Error: Could not find {source}.docx", flush=True)
     data = docx.Document()
 
 pen = tu.Turtle()
 screen = tu.Screen()
+screen.setup(width=1.0, height=1.0)  # Fullscreen optimization
 
-# Setup drawing speed
-tu.tracer(10)  # Update screen every 10th frame for faster drawing
-tu.hideturtle()
-pen.speed(0)
+# Disable animation completely for maximum speed
+tu.tracer(0, 0)
 pen.hideturtle()
+pen.speed(0)
 
-for content_paragraph in data.paragraphs:
+# Flag to control instant completion
+instant_complete = False
+
+def complete_instantly():
+    global instant_complete
+    instant_complete = True
+    print("Fast-forwarding to completion...", flush=True)
+
+# Listen for Enter key
+screen.listen()
+screen.onkey(complete_instantly, "Return")
+
+count = 0
+total_shapes = len(data.paragraphs)
+print(f"Found {total_shapes} shapes to draw.", flush=True)
+
+start_time = time.time()
+
+for i, content_paragraph in enumerate(data.paragraphs):
     content = content_paragraph.text
     
     # Check for outline flag
@@ -52,15 +70,18 @@ for content_paragraph in data.paragraphs:
     
     if coords:
         pen.penup()
+        
+        # Move to first point
         x, y = map(float, coords[0])
         pen.goto(x, -y)
+        
         pen.pendown()
         
         if draw == 1:
             pen.begin_fill()
             
-        for i in range(1, len(coords)):
-            x, y = map(float, coords[i])
+        for j in range(1, len(coords)):
+            x, y = map(float, coords[j])
             pen.goto(x, -y)
             
         # Close the shape
@@ -69,5 +90,17 @@ for content_paragraph in data.paragraphs:
         
         if draw == 1:
             pen.end_fill()
+    
+    count += 1
+    
+    # Update screen every 20 shapes to create a fast animation effect
+    if count % 20 == 0:
+        screen.update()
+        # print(f"Drawn {count}/{total_shapes} shapes...", flush=True)
+
+# Final update
+screen.update()
+end_time = time.time()
+print(f"Drawing finished in {end_time - start_time:.2f} seconds.", flush=True)
 
 screen.mainloop()
